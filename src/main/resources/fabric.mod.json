@@ -1,0 +1,33 @@
+{
+	"schemaVersion": 1,
+	"id": "never_hungry",
+	"version": "1.0.0",
+	"name": "永远不饿",
+	"description": "背包里的徽章让你永不饥饿！",
+	"authors": [
+		"huang"
+	],
+	"contact": {
+		"homepage": "https://fabricmc.net/",
+		"sources": "https://github.com/"
+	},
+	"license": "CC0-1.0",
+	"icon": "assets/never_hungry/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"main": [
+			"com.huang.neverhungry.Never_hungry"
+		]
+	},
+	"mixins": [
+	],
+	"depends": {
+		"fabricloader": ">=0.15.0",
+		"minecraft": "~1.20.4",
+		"java": ">=17",
+		"fabric-api": "*"
+	},
+	"suggests": {
+		"another-mod": "*"
+	}
+}
