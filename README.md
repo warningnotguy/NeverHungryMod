@@ -1,14 +1,68 @@
-<<<<<<< HEAD
-# never_hungry
+# ⚔️ Never Hungry — 永远不饿
 
-## Setup
+> *"当这把剑出鞘时，连世界的代码都在屏息。"*
 
-For setup instructions, please see the [Fabric Documentation page](https://docs.fabricmc.net/develop/getting-started/creating-a-project#setting-up) related to the IDE that you are using.
+一个为 **Minecraft 1.20.4 Fabric** 开发的模组，添加了两件神器：**饱食徽章** 和 **秒杀之剑**。
 
-## License
+---
 
-This template is available under the CC0 license. Feel free to learn from it and incorporate it in your own projects.
-=======
-# NeverHungryMod
-一个Fabric 模组，添加了几个物品
->>>>>>> afbdeb494130c6c3363e56b7998561967ee04bc0
+## 🍵 饱食徽章 (Fullness Charm)
+
+放在背包中即可**自动恢复饥饿值**，无需手持，永不饥饿。
+
+**合成配方：**
+
+|  |  |  |
+|---|---|---|
+|  | 金块 |  |
+| 下界合金锭 | 附魔金苹果 | 下界合金锭 |
+|  | 下界之星 |  |
+
+---
+
+## ⚔️ 秒杀之剑 (Instant Kill Sword)
+
+- **秒杀任何实体**（凋灵、末影龙、玩家……一切）
+- **耐久度无限**
+- **50 格范围攻击**（砍一刀，周围全灭）
+- **击杀特效**（爆炸粒子 + 魔法粒子）
+- 对创造模式玩家免疫
+
+**合成配方：**
+
+|  |  |  |
+|---|---|---|
+|  | 下界合金锭 |  |
+|  | 下界合金锭 |  |
+|  | 下界之星 |  |
+
+---
+
+## 📦 依赖
+
+| 依赖 | 版本 |
+|------|------|
+| Minecraft | 1.20.4 |
+| Fabric Loader | >= 0.15.0 |（推荐0.19.3）
+| Fabric API | 任意版本 |
+
+---
+
+## 🚀 如何安装
+
+1. 安装 Fabric Loader 和 Fabric API
+2. 将模组 `.jar` 文件放入 `.minecraft/mods/` 文件夹
+3. 启动游戏
+
+---
+
+## 🛠️ 开发
+
+```bash
+# 克隆仓库
+git clone https://github.com/warningnotguy/NeverHungryMod.git
+
+# 构建模组
+./gradlew build
+
+构建产物在 build/libs/ 目录下。（1.1.0输出的文件名依然为1.0.0，请注意区分）
