@@ -1,11 +1,17 @@
 package com.huang.neverhungry;
 
+import net.fabricmc.fabric.api.event.player.PlayerBlockBreakEvents;
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemGroups;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
+import net.minecraft.block.entity.BlockEntity;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.Registry;
 import net.minecraft.util.Identifier;
@@ -31,6 +37,18 @@ public class Never_hungry implements ModInitializer {
 		// 注册秒杀剑
 		Registry.register(Registries.ITEM, new Identifier(MOD_ID, "instant_kill_sword"), INSTANT_KILL_SWORD);
 		ItemGroupEvents.modifyEntriesEvent(ItemGroups.COMBAT).register(entries -> entries.add(INSTANT_KILL_SWORD));
+
+		// 监听方块破坏事件，强制破坏基岩
+		PlayerBlockBreakEvents.BEFORE.register((world, player, pos, state, blockEntity) -> {
+			if (player.getMainHandStack().getItem() == INSTANT_KILL_SWORD) {
+				if (state.getBlock() == Blocks.BEDROCK) {
+					world.setBlockState(pos, Blocks.AIR.getDefaultState());
+					System.out.println("💥 基岩被秒挖了！");
+					return false;
+				}
+			}
+			return true;
+		});
 
 		// 服务器 Tick 事件（饱食徽章逻辑）
 		ServerTickEvents.END_SERVER_TICK.register(server -> {

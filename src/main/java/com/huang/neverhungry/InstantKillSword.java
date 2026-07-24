@@ -1,13 +1,16 @@
 package com.huang.neverhungry;
 
-import net.minecraft.entity.Entity;
+import java.util.List;
 import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.SwordItem;
 import net.minecraft.item.ToolMaterial;
+import net.minecraft.particle.ParticleTypes;
 import net.minecraft.recipe.Ingredient;
+import net.minecraft.server.world.ServerWorld;
 import net.minecraft.util.Hand;
 import net.minecraft.util.TypedActionResult;
 import net.minecraft.world.World;
@@ -17,64 +20,114 @@ public class InstantKillSword extends SwordItem {
         super(new ToolMaterial() {
             @Override
             public int getDurability() {
-                return 999999; // 超大耐久度，基本用不完
+                return -1;
             }
 
             @Override
             public float getMiningSpeedMultiplier() {
-                return 9.0f;
+                return Float.MAX_VALUE;
             }
 
             @Override
             public float getAttackDamage() {
-                return 1.0f;
+                return Float.MAX_VALUE;
             }
 
             @Override
             public int getMiningLevel() {
-                return 4;
+                return Integer.MAX_VALUE;
             }
 
             @Override
             public int getEnchantability() {
-                return 15;
+                return Integer.MAX_VALUE;
             }
 
             @Override
             public Ingredient getRepairIngredient() {
                 return Ingredient.ofItems(net.minecraft.item.Items.NETHERITE_INGOT);
             }
-        }, 1, -2.4f, new Item.Settings().maxCount(1));
+        }, 1, Float.MAX_VALUE, new Item.Settings().maxCount(1));  // 攻速也炸裂
     }
 
-    // 核心逻辑：攻击任何实体时直接秒杀
+    @Override
+    public boolean isDamageable() {
+        return false;
+    }
+
+    // 💫 手持粒子效果
+    @Override
+    public void inventoryTick(ItemStack stack, World world, net.minecraft.entity.Entity entity, int slot, boolean selected) {
+        super.inventoryTick(stack, world, entity, slot, selected);
+
+        if (world.isClient) return;
+        if (!(entity instanceof PlayerEntity player)) return;
+
+        boolean isHolding = player.getMainHandStack().getItem() == this || player.getOffHandStack().getItem() == this;
+        if (!isHolding) return;
+
+        if (world.getTime() % 5 == 0) {
+            ServerWorld serverWorld = (ServerWorld) world;
+            double x = player.getX() + (world.random.nextDouble() - 0.5) * 2.0;
+            double y = player.getY() + world.random.nextDouble() * 1.5;
+            double z = player.getZ() + (world.random.nextDouble() - 0.5) * 2.0;
+            serverWorld.spawnParticles(ParticleTypes.INSTANT_EFFECT, x, y, z, 1, 0, 0, 0, 0);
+        }
+    }
+
+    // ⚔️ 核心：秒杀 + 击杀特效（保留 onDeath(null) 让日志炸裂）
     @Override
     public boolean postHit(ItemStack stack, LivingEntity target, LivingEntity attacker) {
-        // 调用父类方法（但我们要阻止耐久度消耗）
-        // 不调用 super.postHit，避免耐久度消耗
-
-        // 检查攻击者是否是玩家
         if (attacker instanceof PlayerEntity player) {
-            // 如果是玩家且目标在创造/旁观模式，不秒杀（防止误伤队友）
             if (target instanceof PlayerEntity targetPlayer) {
                 if (targetPlayer.isCreative() || targetPlayer.isSpectator()) {
                     return false;
                 }
             }
 
-            // 直接设置目标生命值为 0（秒杀任何 LivingEntity）
+            World world = target.getWorld();
+
+            // 💥 击杀特效
+            if (!world.isClient) {
+                ServerWorld serverWorld = (ServerWorld) world;
+                serverWorld.spawnParticles(ParticleTypes.EXPLOSION_EMITTER,
+                        target.getX(), target.getY() + 0.5, target.getZ(),
+                        1, 0, 0, 0, 0);
+
+                for (int i = 0; i < 50; i++) {
+                    double dx = (world.random.nextDouble() - 0.5) * 2.0;
+                    double dy = world.random.nextDouble() * 2.0;
+                    double dz = (world.random.nextDouble() - 0.5) * 2.0;
+                    serverWorld.spawnParticles(ParticleTypes.INSTANT_EFFECT,
+                            target.getX(), target.getY() + 0.5, target.getZ(),
+                            1, dx, dy, dz, 0);
+                }
+            }
+
+            // ⚔️ 秒杀目标
             target.setHealth(0.0f);
-            // 触发死亡动画
             target.onDeath(null);
-
             System.out.println("⚔️ 一刀秒杀！目标: " + target.getName().getString());
-        }
 
-        // 不消耗耐久度
+            // 💀 范围攻击：获取周围 50 格内所有实体
+            List<net.minecraft.entity.Entity> entities = target.getWorld().getOtherEntities(target, target.getBoundingBox().expand(50.0f));
+
+
+
+            for (net.minecraft.entity.Entity entity : entities) {
+                if (entity instanceof LivingEntity living) {
+                    if (living instanceof PlayerEntity p && (p.isCreative() || p.isSpectator())) {
+                        continue;
+                    }
+                    living.setHealth(0.0f);
+                    living.onDeath(null);
+                    System.out.println("💥 范围秒杀！波及: " + living.getName().getString());
+                }
+            }
+        }
         return true;
     }
 
-    // 右键触发（可选）
     @Override
     public TypedActionResult<ItemStack> use(World world, PlayerEntity user, Hand hand) {
         return TypedActionResult.pass(user.getStackInHand(hand));
